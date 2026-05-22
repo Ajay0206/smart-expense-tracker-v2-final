@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Expenses — ExpensePro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="page-heading">
+      <h2>All Expenses</h2>
+      <p>Search, filter, edit and delete all transactions</p>
+    </div>
+    <button class="btn btn-primary" onclick="openAdd()">+ Add Expense</button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <input id="fSearch" type="text" placeholder="🔍 Search by title..." oninput="debounce()">
+    <select id="fCat" onchange="load()"><option value="">All Categories</option></select>
+    <input id="fFrom" type="date" onchange="load()">
+    <input id="fTo"   type="date" onchange="load()">
+    <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Clear</button>
+    <span id="totalBadge" style="margin-left:auto;font-size:12px;color:var(--c-text2);background:var(--c-surf2);padding:6px 12px;border-radius:8px;border:1px solid var(--c-border2)"></span>
+  </div>
+
+  <!-- Table -->
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th>Mode</th>
+          <th>Amount</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tBody">
+        <tr><td colspan="6"><div class="empty"><div class="e-icon">⏳</div><p>Loading...</p></div></td></tr>
+      </tbody>
+    </table>
+    <div class="pagination">
+      <div class="page-info" id="pageInfo">—</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" id="prevBtn" onclick="prevPage()">← Prev</button>
+        <button class="btn btn-ghost btn-sm" id="nextBtn" onclick="nextPage()">Next →</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Add Expense</h3>
+      <button class="btn-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="mErr" class="alert alert-err"></div>
+      <input type="hidden" id="editId">
+      <div class="form-grid">
+        <div class="field"><label>Title *</label><input id="mTitle" type="text" placeholder="Expense title"></div>
+        <div class="field"><label>Amount *</label><input id="mAmount" type="number" placeholder="0.00" min="0" step="0.01"></div>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>Category *</label><select id="mCat"></select></div>
+        <div class="field"><label>Date *</label><input id="mDate" type="date"></div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Payment Mode</label>
+          <select id="mMode">
+            <option value="CASH">💵 Cash</option>
+            <option value="UPI">📱 UPI</option>
+            <option value="CARD">💳 Card</option>
+            <option value="NET_BANKING">🏦 Net Banking</option>
+            <option value="WALLET">👛 Wallet</option>
+            <option value="OTHER">📦 Other</option>
+          </select>
+        </div>
+        <div class="field"><label>Note</label><input id="mNote" type="text" placeholder="Optional"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="mSave" onclick="save()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/sidebar.js"></script>
+<script>
+if (!requireAuth()) throw 0;
+document.getElementById('sidebar').innerHTML = renderSidebar('expenses.html');
+initSidebar();
+
+let page=0, totalPages=0, categories=[], debTimer;
+const user = getUser();
+const cur  = user?.currency || 'INR';
+
+async function init() {
+  categories = await API.categories() || [];
+  const catOpts = categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+  document.getElementById('mCat').innerHTML  = catOpts;
+  document.getElementById('fCat').innerHTML += catOpts;
+  document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
+  await load();
+}
+
+async function load() {
+  const body = document.getElementById('tBody');
+  body.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="e-icon">⏳</div><p>Loading...</p></div></td></tr>';
+  try {
+    const data = await API.expenses({
+      page, size: 15,
+      categoryId: document.getElementById('fCat').value || undefined,
+      from:       document.getElementById('fFrom').value || undefined,
+      to:         document.getElementById('fTo').value   || undefined,
+      q:          document.getElementById('fSearch').value || undefined
+    });
+
+    totalPages = data.totalPages || 0;
+    const items = data.content || [];
+    document.getElementById('pageInfo').textContent =
+      `Page ${page+1} of ${Math.max(totalPages,1)} · ${data.totalElements||0} records`;
+    document.getElementById('prevBtn').disabled = page === 0;
+    document.getElementById('nextBtn').disabled = page >= totalPages-1;
+
+    // Total of current page
+    const pageTotal = items.reduce((s,e)=>s+parseFloat(e.amount||0),0);
+    document.getElementById('totalBadge').textContent = items.length
+      ? `Page total: ${fmtCur(pageTotal, cur)}` : '';
+
+    if (!items.length) {
+      body.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="e-icon">💳</div><p>No expenses found. Add your first!</p></div></td></tr>';
+      return;
+    }
+    body.innerHTML = items.map(e => `
+      <tr>
+        <td>
+          <div style="font-weight:600">${e.title}</div>
+          ${e.note ? `<div style="font-size:11px;color:var(--c-text2);margin-top:2px">📝 ${e.note}</div>` : ''}
+          ${e.isRecurring ? `<span style="font-size:10px;color:var(--c-indigo2);background:var(--c-glow);padding:1px 6px;border-radius:99px">🔁 Recurring</span>` : ''}
+        </td>
+        <td>
+          <span class="cat-tag" style="background:${e.categoryColor}22;color:${e.categoryColor}">
+            ${e.categoryIcon} ${e.categoryName}
+          </span>
+        </td>
+        <td style="white-space:nowrap">${fmtDate(e.expenseDate)}</td>
+        <td><span class="pay-tag">${e.paymentMode?.replace('_',' ')}</span></td>
+        <td style="font-weight:700;color:var(--c-red);white-space:nowrap">−${fmtCur(e.amount, cur)}</td>
+        <td>
+          <div class="tbl-actions">
+            <button class="btn btn-ghost btn-sm" onclick='openEdit(${JSON.stringify(e)})'>✏️ Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="del(${e.id})">🗑️</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  } catch(err) {
+    body.innerHTML = `<tr><td colspan="6" style="color:var(--c-red);text-align:center;padding:20px">${err.message}</td></tr>`;
+  }
+}
+
+function debounce() { clearTimeout(debTimer); debTimer = setTimeout(load, 400); }
+function prevPage() { if(page>0){ page--; load(); } }
+function nextPage() { if(page<totalPages-1){ page++; load(); } }
+function clearFilters() {
+  ['fSearch','fCat','fFrom','fTo'].forEach(id => document.getElementById(id).value='');
+  page=0; load();
+}
+
+function openAdd() {
+  document.getElementById('modalTitle').textContent = 'Add Expense';
+  document.getElementById('editId').value = '';
+  ['mTitle','mNote'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mAmount').value = '';
+  document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('mMode').value = 'CASH';
+  document.getElementById('modal').classList.add('open');
+}
+function openEdit(e) {
+  document.getElementById('modalTitle').textContent = 'Edit Expense';
+  document.getElementById('editId').value    = e.id;
+  document.getElementById('mTitle').value    = e.title;
+  document.getElementById('mAmount').value   = e.amount;
+  document.getElementById('mDate').value     = e.expenseDate;
+  document.getElementById('mCat').value      = e.categoryId;
+  document.getElementById('mMode').value     = e.paymentMode;
+  document.getElementById('mNote').value     = e.note || '';
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('mErr').style.display='none';
+}
+
+async function save() {
+  const btn=document.getElementById('mSave'), err=document.getElementById('mErr');
+  err.style.display='none'; btn.textContent='Saving...'; btn.disabled=true;
+  const id = document.getElementById('editId').value;
+  const payload = {
+    title:       document.getElementById('mTitle').value,
+    amount:      parseFloat(document.getElementById('mAmount').value),
+    categoryId:  parseInt(document.getElementById('mCat').value),
+    expenseDate: document.getElementById('mDate').value,
+    paymentMode: document.getElementById('mMode').value,
+    note:        document.getElementById('mNote').value
+  };
+  try {
+    if(id) await API.editExp(id, payload);
+    else   await API.addExp(payload);
+    closeModal(); toast(id ? 'Expense updated!' : 'Expense added!'); load();
+  } catch(e) { err.textContent=e.message; err.style.display='block'; }
+  btn.textContent='Save'; btn.disabled=false;
+}
+
+async function del(id) {
+  if(!confirm('Delete this expense? This cannot be undone.')) return;
+  try { await API.delExp(id); toast('Expense deleted'); load(); }
+  catch(e) { toast(e.message,'err'); }
+}
+
+document.getElementById('modal').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
+init();
+</script>
+</body>
+</html>

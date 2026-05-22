@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reports — ExpensePro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="page-heading">
+      <h2>Reports & Analytics</h2>
+      <p>Deep insights into your spending habits</p>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="report-controls">
+    <select id="rYear"></select>
+    <select id="rMonth">
+      <option value="1">January</option><option value="2">February</option>
+      <option value="3">March</option><option value="4">April</option>
+      <option value="5">May</option><option value="6">June</option>
+      <option value="7">July</option><option value="8">August</option>
+      <option value="9">September</option><option value="10">October</option>
+      <option value="11">November</option><option value="12">December</option>
+    </select>
+    <button class="btn btn-primary" onclick="loadReport()">🔄 Refresh</button>
+    <button class="btn btn-ghost" id="pdfBtn" onclick="exportPdf()">📄 Export PDF</button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stats-row" style="margin-bottom:20px">
+    <div class="stat-card" style="--accent:#6366f1">
+      <div class="stat-icon">💸</div>
+      <div class="stat-label">Total Spent</div>
+      <div class="stat-value" id="rTotal">—</div>
+    </div>
+    <div class="stat-card" style="--accent:#10b981">
+      <div class="stat-icon">🔢</div>
+      <div class="stat-label">Transactions</div>
+      <div class="stat-value" id="rCount">—</div>
+    </div>
+    <div class="stat-card" style="--accent:#f59e0b">
+      <div class="stat-icon">📅</div>
+      <div class="stat-label">Avg per Day</div>
+      <div class="stat-value" id="rAvg">—</div>
+    </div>
+    <div class="stat-card" style="--accent:#8b5cf6">
+      <div class="stat-icon">🏆</div>
+      <div class="stat-label">Top Category</div>
+      <div class="stat-value" id="rTopCat" style="font-size:16px">—</div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="report-grid" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-title">Spending by Category <span class="card-badge">Bar Chart</span></div>
+      <canvas id="barChart" height="220"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Category Distribution <span class="card-badge">Pie Chart</span></div>
+      <canvas id="pieChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- 12-Month Trend -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">
+      12-Month Spending Trend
+      <span class="card-badge">Area Chart</span>
+    </div>
+    <canvas id="lineChart" height="110"></canvas>
+  </div>
+
+  <!-- Category Table -->
+  <div class="card">
+    <div class="card-title">Category Detail Breakdown</div>
+    <div class="tbl-wrap" style="border:none;border-radius:0">
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Transactions</th>
+            <th>Amount</th>
+            <th>% of Total</th>
+            <th>Budget</th>
+          </tr>
+        </thead>
+        <tbody id="catTable">
+          <tr><td colspan="5"><div class="empty"><div class="e-icon">⏳</div><p>Loading...</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/sidebar.js"></script>
+<script>
+if (!requireAuth()) throw 0;
+document.getElementById('sidebar').innerHTML = renderSidebar('reports.html');
+initSidebar();
+chartDefaults();
+
+let barChart, pieChart, lineChart;
+const user = getUser();
+const cur  = user?.currency || 'INR';
+
+async function init() {
+  // Populate year selector
+  const now = new Date();
+  const ySel = document.getElementById('rYear');
+  for (let y = now.getFullYear(); y >= now.getFullYear() - 4; y--) {
+    ySel.innerHTML += `<option value="${y}">${y}</option>`;
+  }
+  document.getElementById('rMonth').value = now.getMonth() + 1;
+  await loadReport();
+}
+
+async function loadReport() {
+  try {
+    const data = await API.dashboard();
+    if (!data) return;
+
+    const cats  = data.categories || [];
+    const trend = data.trend || [];
+
+    // Summary stats
+    const total = parseFloat(data.thisMonth || 0);
+    const count = data.recent?.length || 0;
+    const now   = new Date();
+    const days  = now.getDate();
+
+    document.getElementById('rTotal').textContent = fmtCur(total, cur);
+    document.getElementById('rCount').textContent = data.txnCount || 0;
+    document.getElementById('rAvg').textContent   = fmtCur(total / Math.max(days, 1), cur);
+    if (cats.length > 0) {
+      document.getElementById('rTopCat').textContent = `${cats[0].icon} ${cats[0].name}`;
+    }
+
+    buildBar(cats);
+    buildPie(cats);
+    buildLine(trend);
+    buildCatTable(cats, total);
+
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+function buildBar(cats) {
+  const ctx = document.getElementById('barChart').getContext('2d');
+  if (barChart) barChart.destroy();
+  barChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: cats.map(c => c.icon + ' ' + c.name),
+      datasets: [{
+        label: 'Amount',
+        data: cats.map(c => parseFloat(c.amount)),
+        backgroundColor: cats.map(c => c.color + 'cc'),
+        borderColor:     cats.map(c => c.color),
+        borderWidth: 1,
+        borderRadius: 8,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => fmtCur(c.raw, cur) } }
+      },
+      scales: {
+        x: { beginAtZero: true, grid: { color: '#1e1e33' }, ticks: { callback: v => fmtCur(v, cur) } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function buildPie(cats) {
+  const ctx = document.getElementById('pieChart').getContext('2d');
+  if (pieChart) pieChart.destroy();
+  pieChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: cats.map(c => c.name),
+      datasets: [{
+        data: cats.map(c => parseFloat(c.amount)),
+        backgroundColor: cats.map(c => c.color),
+        borderColor: '#0e0e1a', borderWidth: 3, hoverOffset: 12
+      }]
+    },
+    options: {
+      responsive: true, cutout: '60%',
+      plugins: {
+        legend: { position: 'right', labels: { padding: 14, font: { size: 11 }, boxWidth: 10, boxHeight: 10 } },
+        tooltip: { callbacks: { label: c => `${c.label}: ${fmtCur(c.raw, cur)} (${parseFloat(c.parsed / (cats.reduce((s,x)=>s+parseFloat(x.amount),0)) * 100).toFixed(1)}%)` } }
+      }
+    }
+  });
+}
+
+function buildLine(trend) {
+  const sorted = [...trend].sort((a,b) => a.year !== b.year ? a.year-b.year : a.month-b.month);
+  const ctx = document.getElementById('lineChart').getContext('2d');
+  if (lineChart) lineChart.destroy();
+
+  const grad = ctx.createLinearGradient(0, 0, 0, 200);
+  grad.addColorStop(0, 'rgba(99,102,241,.4)');
+  grad.addColorStop(1, 'rgba(99,102,241,0)');
+
+  lineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sorted.map(t => t.label),
+      datasets: [{
+        label: 'Monthly Total',
+        data: sorted.map(t => parseFloat(t.amount)),
+        borderColor: '#6366f1', backgroundColor: grad,
+        fill: true, tension: 0.4,
+        pointBackgroundColor: '#6366f1', pointRadius: 5, pointHoverRadius: 8,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => fmtCur(c.raw, cur) } }
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#1e1e33' }, ticks: { callback: v => fmtCur(v, cur) } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function buildCatTable(cats, total) {
+  const tb = document.getElementById('catTable');
+  if (!cats.length) {
+    tb.innerHTML = '<tr><td colspan="5"><div class="empty"><div class="e-icon">📊</div><p>No data for this period</p></div></td></tr>';
+    return;
+  }
+  tb.innerHTML = cats.map(c => {
+    const pct = total > 0 ? (parseFloat(c.amount) / total * 100).toFixed(1) : '0.0';
+    return `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:10px;height:10px;border-radius:50%;background:${c.color};flex-shrink:0"></div>
+            <span>${c.icon} ${c.name}</span>
+          </div>
+        </td>
+        <td>${c.count}</td>
+        <td style="font-weight:700">${fmtCur(c.amount, cur)}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="prog-bar" style="flex:1">
+              <div class="prog-fill" style="width:${Math.min(pct,100)}%;background:${c.color}"></div>
+            </div>
+            <span style="font-size:11px;color:var(--c-text2);min-width:34px">${pct}%</span>
+          </div>
+        </td>
+        <td style="color:var(--c-text2);font-size:12px">—</td>
+      </tr>`;
+  }).join('');
+}
+
+async function exportPdf() {
+  const btn = document.getElementById('pdfBtn');
+  btn.textContent = '⏳ Generating...'; btn.disabled = true;
+  try {
+    const y = document.getElementById('rYear').value;
+    const m = document.getElementById('rMonth').value;
+    const blob = await API.exportPdf(y, m);
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ExpensePro-Report-${y}-${String(m).padStart(2,'0')}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('PDF downloaded!');
+    }
+  } catch(e) { toast(e.message, 'err'); }
+  btn.textContent = '📄 Export PDF'; btn.disabled = false;
+}
+
+init();
+</script>
+</body>
+</html>
