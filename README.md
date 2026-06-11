@@ -121,7 +121,6 @@ Open the frontend files using Live Server in VS Code or any local web server.
 
 ---
 
-## 📸 Screenshots
 
 ## 📸 Screenshots
 
