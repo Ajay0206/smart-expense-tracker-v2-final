@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard — ExpensePro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar"></aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="page-heading">
+      <h2>Dashboard</h2>
+      <p id="dashSubtitle">Loading your financial overview...</p>
+    </div>
+    <div class="topbar-right">
+      <span id="monthLabel" style="font-size:12px;color:var(--c-text2);background:var(--c-surf2);padding:6px 12px;border-radius:8px;border:1px solid var(--c-border2)"></span>
+      <button class="btn btn-primary" onclick="openModal()">+ Add Expense</button>
+    </div>
+  </div>
+
+  <!-- ── Stat Cards ── -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card" style="--accent:#6366f1">
+      <div class="stat-icon">💸</div>
+      <div class="stat-label">This Month</div>
+      <div class="stat-value" id="s1">—</div>
+      <div class="stat-sub" id="s1sub">vs last month</div>
+    </div>
+    <div class="stat-card" style="--accent:#10b981">
+      <div class="stat-icon">📅</div>
+      <div class="stat-label">This Year</div>
+      <div class="stat-value" id="s2">—</div>
+      <div class="stat-sub">Total 2025 spending</div>
+    </div>
+    <div class="stat-card" style="--accent:#f59e0b">
+      <div class="stat-icon">🏦</div>
+      <div class="stat-label">Budget Used</div>
+      <div class="stat-value" id="s3">—</div>
+      <div class="budget-wrap">
+        <div class="budget-prog"><div class="budget-fill" id="budgetBar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="stat-card" style="--accent:#8b5cf6">
+      <div class="stat-icon">🔢</div>
+      <div class="stat-label">Total Transactions</div>
+      <div class="stat-value" id="s4">—</div>
+      <div class="stat-sub">All time</div>
+    </div>
+  </div>
+
+  <!-- ── Charts Row ── -->
+  <div class="charts-grid">
+    <div class="card">
+      <div class="card-title">
+        Monthly Spending Trend
+        <span class="card-badge" id="trendBadge">Last 12 months</span>
+      </div>
+      <canvas id="trendChart" height="180"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        Spending by Category
+        <span class="card-badge">This month</span>
+      </div>
+      <canvas id="donutChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- ── Bottom Row ── -->
+  <div class="bottom-grid">
+    <!-- Category breakdown -->
+    <div class="card">
+      <div class="card-title">Category Breakdown</div>
+      <div id="catList"><div class="empty"><div class="e-icon">📊</div><p>No data yet</p></div></div>
+    </div>
+
+    <!-- Daily spending -->
+    <div class="card">
+      <div class="card-title">
+        Daily Spending
+        <span class="card-badge">This month</span>
+      </div>
+      <canvas id="dailyChart" height="180"></canvas>
+    </div>
+
+    <!-- Recent expenses -->
+    <div class="card">
+      <div class="card-title">
+        Recent Transactions
+        <a href="expenses.html" style="font-size:11px;color:var(--c-indigo2);text-decoration:none;font-weight:500">View all →</a>
+      </div>
+      <div id="recentList"><div class="empty"><div class="e-icon">💳</div><p>No expenses yet</p></div></div>
+    </div>
+  </div>
+</main>
+
+<!-- ── Add Expense Modal ── -->
+<div class="overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>➕ Add Expense</h3>
+      <button class="btn-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="addErr" class="alert alert-err"></div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Title *</label>
+          <input id="eTitle" type="text" placeholder="What did you spend on?">
+        </div>
+        <div class="field">
+          <label>Amount *</label>
+          <input id="eAmount" type="number" placeholder="0.00" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Category *</label>
+          <select id="eCat"></select>
+        </div>
+        <div class="field">
+          <label>Date *</label>
+          <input id="eDate" type="date">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Payment Mode</label>
+          <select id="eMode">
+            <option value="CASH">💵 Cash</option>
+            <option value="UPI">📱 UPI</option>
+            <option value="CARD">💳 Card</option>
+            <option value="NET_BANKING">🏦 Net Banking</option>
+            <option value="WALLET">👛 Wallet</option>
+            <option value="OTHER">📦 Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Note</label>
+          <input id="eNote" type="text" placeholder="Optional note">
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveExpense()">Save Expense</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/sidebar.js"></script>
+<script>
+if (!requireAuth()) throw 0;
+document.getElementById('sidebar').innerHTML = renderSidebar('dashboard.html');
+initSidebar();
+chartDefaults();
+
+let trendChart, donutChart, dailyChart;
+let categories = [];
+
+async function init() {
+  const now = new Date();
+  document.getElementById('monthLabel').textContent =
+    now.toLocaleString('en', { month: 'long', year: 'numeric' });
+
+  categories = await API.categories() || [];
+  populateCatSelect();
+  document.getElementById('eDate').value = new Date().toISOString().split('T')[0];
+
+  await loadDash();
+}
+
+async function loadDash() {
+  const data = await API.dashboard();
+  if (!data) return;
+
+  const cur = data.currency || 'INR';
+  const u = getUser();
+  document.getElementById('dashSubtitle').textContent =
+    `Welcome back, ${u?.fullName?.split(' ')[0] || 'there'} — here's your financial snapshot`;
+
+  // Stats
+  document.getElementById('s1').textContent = fmtCur(data.thisMonth, cur);
+  document.getElementById('s2').textContent = fmtCur(data.thisYear,  cur);
+  document.getElementById('s4').textContent = data.txnCount || 0;
+
+  const pct = parseFloat(data.limitPct || 0);
+  document.getElementById('s3').textContent = pct.toFixed(1) + '%';
+  const bar = document.getElementById('budgetBar');
+  bar.style.width = Math.min(pct, 100) + '%';
+  if (pct > 85) bar.classList.add('warn');
+
+  const s1sub = document.getElementById('s1sub');
+  if (data.changeDir !== 'none') {
+    const arrow = data.changeDir === 'up' ? '▲' : '▼';
+    s1sub.textContent = `${arrow} ${parseFloat(data.changePct).toFixed(1)}% vs last month`;
+    s1sub.className = 'stat-sub ' + (data.changeDir === 'up' ? 'down' : 'up');
+  }
+
+  // Trend chart
+  buildTrend(data.trend || [], cur);
+  // Donut chart
+  buildDonut(data.categories || [], cur);
+  // Daily chart
+  buildDaily(data.daily || [], cur);
+  // Category list
+  buildCatList(data.categories || [], cur);
+  // Recent
+  buildRecent(data.recent || [], cur);
+}
+
+function buildTrend(trend, cur) {
+  const labels = trend.map(t => t.label);
+  const vals   = trend.map(t => parseFloat(t.amount));
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if (trendChart) trendChart.destroy();
+
+  const grad = ctx.createLinearGradient(0, 0, 0, 240);
+  grad.addColorStop(0, 'rgba(99,102,241,.5)');
+  grad.addColorStop(1, 'rgba(99,102,241,0)');
+
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Spending', data: vals,
+        borderColor: '#6366f1', backgroundColor: grad,
+        fill: true, tension: 0.4,
+        pointBackgroundColor: '#6366f1',
+        pointRadius: 4, pointHoverRadius: 7,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => fmtCur(c.raw, cur) } }
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#1e1e33' }, ticks: { callback: v => fmtCur(v, cur) } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function buildDonut(cats, cur) {
+  if (!cats.length) return;
+  const ctx = document.getElementById('donutChart').getContext('2d');
+  if (donutChart) donutChart.destroy();
+
+  donutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: cats.map(c => c.name),
+      datasets: [{
+        data: cats.map(c => parseFloat(c.amount)),
+        backgroundColor: cats.map(c => c.color || '#6366f1'),
+        borderColor: '#0e0e1a', borderWidth: 3, hoverOffset: 10
+      }]
+    },
+    options: {
+      responsive: true, cutout: '70%',
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 14, font:{size:11}, boxWidth:10, boxHeight:10 } },
+        tooltip: { callbacks: { label: c => `${c.label}: ${fmtCur(c.raw, cur)}` } }
+      }
+    }
+  });
+}
+
+function buildDaily(daily, cur) {
+  const ctx = document.getElementById('dailyChart').getContext('2d');
+  if (dailyChart) dailyChart.destroy();
+
+  dailyChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: daily.map(d => 'D' + d.day),
+      datasets: [{
+        label: 'Daily',
+        data: daily.map(d => parseFloat(d.amount)),
+        backgroundColor: 'rgba(16,185,129,.5)',
+        borderColor: '#10b981',
+        borderRadius: 5, borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => fmtCur(c.raw, cur) }} },
+      scales: {
+        y: { beginAtZero:true, grid:{color:'#1e1e33'}, ticks:{ callback: v => fmtCur(v,cur) }},
+        x: { grid:{display:false} }
+      }
+    }
+  });
+}
+
+function buildCatList(cats, cur) {
+  const el = document.getElementById('catList');
+  if (!cats.length) { el.innerHTML = '<div class="empty"><div class="e-icon">📊</div><p>No expenses this month</p></div>'; return; }
+  el.innerHTML = cats.slice(0,7).map(c => `
+    <div class="cat-row">
+      <div class="cat-pill" style="background:${c.color}"></div>
+      <div class="cat-label">
+        <div class="cat-name">${c.icon} ${c.name}</div>
+        <div class="prog-bar" style="margin-top:4px">
+          <div class="prog-fill" style="width:${Math.min(parseFloat(c.pct||0),100)}%;background:${c.color}"></div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="cat-amt">${fmtCur(c.amount, cur)}</div>
+        <div class="cat-pct">${parseFloat(c.pct||0).toFixed(1)}%</div>
+      </div>
+    </div>`).join('');
+}
+
+function buildRecent(items, cur) {
+  const el = document.getElementById('recentList');
+  if (!items.length) { el.innerHTML = '<div class="empty"><div class="e-icon">💳</div><p>No transactions yet. Add your first!</p></div>'; return; }
+  el.innerHTML = items.map(e => `
+    <div class="exp-item">
+      <div class="exp-emoji" style="background:${e.categoryColor || '#6366f1'}22">${e.categoryIcon || catEmoji(e.categoryName)}</div>
+      <div class="exp-info">
+        <div class="exp-title">${e.title}</div>
+        <div class="exp-meta">${e.categoryName} · ${fmtShortDate(e.expenseDate)}</div>
+      </div>
+      <div class="exp-amt">−${fmtCur(e.amount, cur)}</div>
+    </div>`).join('');
+}
+
+function populateCatSelect() {
+  document.getElementById('eCat').innerHTML =
+    categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+}
+
+function openModal()  { document.getElementById('addModal').classList.add('open'); }
+function closeModal() {
+  document.getElementById('addModal').classList.remove('open');
+  document.getElementById('addErr').style.display = 'none';
+}
+
+async function saveExpense() {
+  const btn = document.getElementById('saveBtn');
+  const err = document.getElementById('addErr');
+  err.style.display = 'none';
+  btn.textContent = 'Saving...'; btn.disabled = true;
+  try {
+    await API.addExp({
+      title:       document.getElementById('eTitle').value,
+      amount:      parseFloat(document.getElementById('eAmount').value),
+      categoryId:  parseInt(document.getElementById('eCat').value),
+      expenseDate: document.getElementById('eDate').value,
+      paymentMode: document.getElementById('eMode').value,
+      note:        document.getElementById('eNote').value
+    });
+    closeModal();
+    ['eTitle','eAmount','eNote'].forEach(id => document.getElementById(id).value='');
+    toast('Expense added!');
+    await loadDash();
+  } catch(e) {
+    err.textContent = e.message; err.style.display = 'block';
+  }
+  btn.textContent = 'Save Expense'; btn.disabled = false;
+}
+
+document.getElementById('addModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+init();
+</script>
+</body>
+</html>
