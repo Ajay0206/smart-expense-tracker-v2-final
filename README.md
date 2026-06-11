@@ -120,7 +120,7 @@ mvn spring-boot:run
 Open the frontend files using Live Server in VS Code or any local web server.
 
 ---
-
+ScreenShots/Dash_Board.png
 
 ---
 
