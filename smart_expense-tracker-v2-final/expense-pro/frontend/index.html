@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ExpensePro — Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body { margin:0; }
+  .split { display:flex; min-height:100vh; }
+  /* Left panel */
+  .left {
+    flex: 1;
+    background: linear-gradient(135deg, #0f0f1f 0%, #1a1a35 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 48px; position: relative; overflow: hidden;
+  }
+  .left::before {
+    content:'';
+    position:absolute; width:500px; height:500px;
+    background: radial-gradient(circle, rgba(99,102,241,.15) 0%, transparent 70%);
+    top:-100px; left:-100px;
+  }
+  .left-content { position:relative; z-index:1; max-width:420px; }
+  .left-logo { display:flex; align-items:center; gap:14px; margin-bottom:40px; }
+  .left-logo-icon {
+    width:56px; height:56px;
+    background: linear-gradient(135deg,#6366f1,#4f46e5);
+    border-radius:16px; font-size:26px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 8px 32px rgba(99,102,241,.4);
+  }
+  .left-logo h1 { font-size:28px; font-weight:800; color:#f0f2ff; letter-spacing:-.5px; }
+  .left-logo p  { font-size:13px; color:#6366f1; font-weight:600; }
+
+  .features { display:flex; flex-direction:column; gap:20px; }
+  .feature { display:flex; align-items:flex-start; gap:14px; }
+  .feature-icon {
+    width:40px; height:40px; border-radius:10px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:18px;
+  }
+  .feature h4 { font-size:14px; font-weight:600; color:#f0f2ff; margin-bottom:3px; }
+  .feature p  { font-size:12px; color:#64748b; line-height:1.5; }
+
+  .stats-mini {
+    display:flex; gap:20px; margin-top:40px;
+    padding-top:28px; border-top:1px solid #1e1e33;
+  }
+  .stat-mini { text-align:center; }
+  .stat-mini h3 { font-size:22px; font-weight:800; color:#6366f1; }
+  .stat-mini p  { font-size:11px; color:#64748b; margin-top:2px; }
+
+  /* Right panel */
+  .right {
+    width:460px; flex-shrink:0;
+    background:#0e0e1a;
+    display:flex; align-items:center; justify-content:center;
+    padding:48px 40px;
+    border-left:1px solid #1e1e33;
+  }
+  .right-inner { width:100%; }
+
+  .greeting { margin-bottom:28px; }
+  .greeting h2 { font-size:22px; font-weight:800; color:#f0f2ff; }
+  .greeting p  { font-size:13px; color:#64748b; margin-top:4px; }
+
+  .tabs { display:flex; gap:4px; background:#141422; padding:4px; border-radius:10px; margin-bottom:24px; }
+  .tab {
+    flex:1; padding:9px; border:none; background:transparent;
+    color:#64748b; font-size:13px; font-weight:600;
+    cursor:pointer; border-radius:7px; font-family:inherit; transition:all .18s;
+  }
+  .tab.active { background:#6366f1; color:white; }
+
+  @media(max-width:900px){ .left { display:none; } .right { width:100%; border:none; } }
+</style>
+</head>
+<body>
+<div class="split">
+
+  <!-- LEFT: marketing panel -->
+  <div class="left">
+    <div class="left-content">
+      <div class="left-logo">
+        <div class="left-logo-icon">💸</div>
+        <div>
+          <h1>ExpensePro</h1>
+          <p>Smart Financial Tracking</p>
+        </div>
+      </div>
+
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon" style="background:rgba(99,102,241,.15)">📊</div>
+          <div>
+            <h4>Real-time Dashboard</h4>
+            <p>Live charts and analytics — see exactly where your money goes every month.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon" style="background:rgba(16,185,129,.15)">🗂️</div>
+          <div>
+            <h4>Smart Categorisation</h4>
+            <p>12 built-in categories with full CRUD support and colour-coded tracking.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon" style="background:rgba(245,158,11,.15)">📄</div>
+          <div>
+            <h4>PDF Reports</h4>
+            <p>Export beautiful monthly reports with summary cards and transaction tables.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon" style="background:rgba(239,68,68,.15)">🔒</div>
+          <div>
+            <h4>Secure JWT Auth</h4>
+            <p>BCrypt hashed passwords, stateless JWT tokens, Spring Security filter chain.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-mini">
+        <div class="stat-mini"><h3>12+</h3><p>Categories</p></div>
+        <div class="stat-mini"><h3>REST</h3><p>API Endpoints</p></div>
+        <div class="stat-mini"><h3>PDF</h3><p>Export</p></div>
+        <div class="stat-mini"><h3>JWT</h3><p>Auth</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: auth form -->
+  <div class="right">
+    <div class="right-inner">
+      <div class="greeting">
+        <h2 id="greetTitle">Welcome back 👋</h2>
+        <p id="greetSub">Sign in to your ExpensePro account</p>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('login')">Login</button>
+        <button class="tab"        onclick="switchTab('register')">Sign Up</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="loginPanel">
+        <div id="loginErr" class="alert alert-err"></div>
+        <div class="field">
+          <label>Username</label>
+          <input id="lUser" type="text" placeholder="your_username" autocomplete="username">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input id="lPass" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:4px;justify-content:center"
+                id="lBtn" onclick="doLogin()">Sign In →</button>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="regPanel" style="display:none">
+        <div id="regErr" class="alert alert-err"></div>
+        <div id="regOk"  class="alert alert-ok"></div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Username</label>
+            <input id="rUser" type="text" placeholder="username">
+          </div>
+          <div class="field">
+            <label>Full Name</label>
+            <input id="rName" type="text" placeholder="Your name">
+          </div>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input id="rEmail" type="email" placeholder="you@email.com">
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Password</label>
+            <input id="rPass" type="password" placeholder="Min 6 chars">
+          </div>
+          <div class="field">
+            <label>Currency</label>
+            <select id="rCur">
+              <option value="INR">₹ INR</option>
+              <option value="USD">$ USD</option>
+              <option value="EUR">€ EUR</option>
+              <option value="GBP">£ GBP</option>
+              <option value="JPY">¥ JPY</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center"
+                id="rBtn" onclick="doRegister()">Create Account →</button>
+      </div>
+
+      <p style="text-align:center;font-size:11px;color:#4b5563;margin-top:20px">
+        ExpensePro · Java Spring Boot + MySQL + JWT · Portfolio Project
+      </p>
+    </div>
+  </div>
+</div>
+
+<script src="js/utils.js"></script>
+<script>
+  if (getToken()) window.location.href = 'dashboard.html';
+
+  function switchTab(t) {
+    const isLogin = t === 'login';
+    document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', isLogin ? i===0 : i===1));
+    document.getElementById('loginPanel').style.display = isLogin ? '' : 'none';
+    document.getElementById('regPanel').style.display   = isLogin ? 'none' : '';
+    document.getElementById('greetTitle').textContent   = isLogin ? 'Welcome back 👋' : 'Create account 🎉';
+    document.getElementById('greetSub').textContent     = isLogin ? 'Sign in to your ExpensePro account' : 'Start tracking your finances today';
+  }
+
+  async function doLogin() {
+    const btn = document.getElementById('lBtn');
+    const err = document.getElementById('loginErr');
+    err.style.display = 'none';
+    btn.textContent = 'Signing in...'; btn.disabled = true;
+    try {
+      const data = await API.login({ username: document.getElementById('lUser').value, password: document.getElementById('lPass').value });
+      saveSession(data);
+      window.location.href = 'dashboard.html';
+    } catch(e) {
+      err.textContent = e.message; err.style.display = 'block';
+      btn.textContent = 'Sign In →'; btn.disabled = false;
+    }
+  }
+
+  async function doRegister() {
+    const btn = document.getElementById('rBtn');
+    const err = document.getElementById('regErr');
+    const ok  = document.getElementById('regOk');
+    err.style.display = ok.style.display = 'none';
+    btn.textContent = 'Creating...'; btn.disabled = true;
+    try {
+      await API.register({
+        username: document.getElementById('rUser').value,
+        email:    document.getElementById('rEmail').value,
+        password: document.getElementById('rPass').value,
+        fullName: document.getElementById('rName').value,
+        currency: document.getElementById('rCur').value
+      });
+      ok.textContent = '✓ Account created! Please login.'; ok.style.display = 'block';
+      setTimeout(() => switchTab('login'), 1500);
+    } catch(e) {
+      err.textContent = e.message; err.style.display = 'block';
+    }
+    btn.textContent = 'Create Account →'; btn.disabled = false;
+  }
+
+  // Enter key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (document.getElementById('loginPanel').style.display !== 'none') doLogin();
+      else doRegister();
+    }
+  });
+</script>
+</body>
+</html>

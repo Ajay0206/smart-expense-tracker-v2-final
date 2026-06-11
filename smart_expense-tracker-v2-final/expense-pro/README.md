@@ -7,6 +7,8 @@
 ---
 
 ## 📁 Project Structure
+
+```
 expense-pro/
 ├── database/
 │   └── schema.sql                    ← MySQL schema, indexes, seed data, views
@@ -38,47 +40,49 @@ expense-pro/
 │               └── Controllers.java   ← ExpenseController + ReportController
 │
 └── frontend/
-├── index.html        ← Login / Register (split-screen design)
-├── dashboard.html    ← Main dashboard: 4 stats + 3 charts + category list
-├── expenses.html     ← Full CRUD table with search/filter/pagination
-├── reports.html      ← Analytics: bar, pie, area charts + PDF export
-├── settings.html     ← Profile, currency, budget settings
-├── css/
-│   └── style.css     ← Complete dark design system (700+ lines)
-└── js/
-├── utils.js      ← API helper, formatters, toast, chart defaults
-└── sidebar.js    ← Shared sidebar renderer
+    ├── index.html        ← Login / Register (split-screen design)
+    ├── dashboard.html    ← Main dashboard: 4 stats + 3 charts + category list
+    ├── expenses.html     ← Full CRUD table with search/filter/pagination
+    ├── reports.html      ← Analytics: bar, pie, area charts + PDF export
+    ├── settings.html     ← Profile, currency, budget settings
+    ├── css/
+    │   └── style.css     ← Complete dark design system (700+ lines)
+    └── js/
+        ├── utils.js      ← API helper, formatters, toast, chart defaults
+        └── sidebar.js    ← Shared sidebar renderer
+```
+
 ---
 
 ## 🚀 Quick Start (4 Steps)
 
 ### Step 1 — MySQL Setup
-   bash
+```bash
 mysql -u root -p
-   
+```
 Inside MySQL:
-   sql
+```sql
 source /path/to/expense-pro/database/schema.sql;
-   
+```
 
 ### Step 2 — Configure Backend
 Edit `backend/src/main/resources/application.properties`:
-   properties
+```properties
 spring.datasource.password=YOUR_MYSQL_PASSWORD
-   
+```
 
 ### Step 3 — Run Backend
-   bash
+```bash
 cd expense-pro/backend
 mvn spring-boot:run
-   
+```
 Wait for: `ExpensePro API started on :8080`
 
 ### Step 4 — Open Frontend
-   bash
+```bash
 cd expense-pro/frontend
 python -m http.server 5500
-   
+```
 Visit: **http://localhost:5500**
 
 OR use VS Code Live Server (right-click `index.html` → Open with Live Server)
@@ -111,13 +115,15 @@ OR use VS Code Live Server (right-click `index.html` → Open with Live Server)
 | `q` | string | Title search |
 
 ### Auth header (all protected routes):
-
+```
 Authorization: Bearer <jwt_token>
+```
+
 ---
 
 ## 🧪 Test the API (curl)
 
-   bash
+```bash
 # Register
 curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
@@ -137,7 +143,7 @@ curl -X POST http://localhost:8080/api/expenses \
 # Dashboard
 curl http://localhost:8080/api/expenses/dashboard \
   -H "Authorization: Bearer YOUR_TOKEN"
-   
+```
 
 ---
 
