@@ -1,193 +1,173 @@
-# 💸 ExpensePro v2 — Smart Expense Tracker
-### Full-Stack: Java Spring Boot + MySQL + HTML/CSS/JS
+# 💰 ExpensePro v2 - Smart Expense Tracker
 
-> A production-grade, interview-ready expense tracking app demonstrating
-> authentication, CRUD, SQL, charts, analytics, and PDF export.
+> A Full-Stack Expense Tracking Web Application built using Java, Spring Boot, MySQL, HTML, CSS, and JavaScript to help users manage expenses, monitor spending patterns, and track financial activities efficiently.
 
 ---
 
-## 📁 Project Structure
+## 📌 Project Overview
+
+ExpensePro v2 is a personal finance management application that enables users to record, manage, and analyze their daily expenses through an intuitive dashboard. The application demonstrates full-stack development concepts including user authentication, database management, REST APIs, frontend-backend integration, and data visualization.
+
+---
+
+## 🚀 Features
+
+* Secure user registration and login functionality
+* Expense creation, update, and deletion
+* Category-wise expense management
+* Interactive dashboard for expense tracking
+* Financial reports and analytics
+* Responsive user interface
+* MySQL database integration
+* RESTful API architecture
+* Role-based application structure
+* Frontend and backend integration
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer           | Technology            |
+| --------------- | --------------------- |
+| Backend         | Java, Spring Boot     |
+| Frontend        | HTML, CSS, JavaScript |
+| Database        | MySQL                 |
+| Build Tool      | Maven                 |
+| API Testing     | Postman               |
+| Version Control | Git & GitHub          |
+
+---
+
+## 📂 Project Structure
+
+```text
 expense-pro/
-├── database/
-│   └── schema.sql                    ← MySQL schema, indexes, seed data, views
 │
 ├── backend/
-│   ├── pom.xml                       ← Maven dependencies
-│   └── src/main/
-│       ├── resources/
-│       │   └── application.properties
-│       └── java/com/expensepro/
-│           ├── ExpenseProApplication.java
-│           ├── model/
-│           │   ├── User.java
-│           │   ├── Category.java
-│           │   ├── Expense.java
-│           │   └── SavingsGoal.java
-│           ├── repository/
-│           │   └── Repositories.java  ← All 4 JPA repos + custom JPQL queries
-│           ├── security/
-│           │   ├── JwtUtil.java
-│           │   └── JwtAuthFilter.java ← Also contains UserDetailsServiceImpl
-│           ├── config/
-│           │   └── SecurityConfig.java
-│           ├── service/
-│           │   ├── ExpenseService.java ← All business logic + analytics
-│           │   └── PdfService.java     ← iText PDF generation
-│           └── controller/
-│               ├── AuthController.java
-│               └── Controllers.java   ← ExpenseController + ReportController
+│   ├── src/main/java/
+│   │   ├── controller/
+│   │   ├── service/
+│   │   ├── repository/
+│   │   ├── model/
+│   │   ├── security/
+│   │   └── config/
+│   ├── src/main/resources/
+│   └── pom.xml
 │
-└── frontend/
-├── index.html        ← Login / Register (split-screen design)
-├── dashboard.html    ← Main dashboard: 4 stats + 3 charts + category list
-├── expenses.html     ← Full CRUD table with search/filter/pagination
-├── reports.html      ← Analytics: bar, pie, area charts + PDF export
-├── settings.html     ← Profile, currency, budget settings
-├── css/
-│   └── style.css     ← Complete dark design system (700+ lines)
-└── js/
-├── utils.js      ← API helper, formatters, toast, chart defaults
-└── sidebar.js    ← Shared sidebar renderer
+├── frontend/
+│   ├── index.html
+│   ├── dashboard.html
+│   ├── expenses.html
+│   ├── reports.html
+│   ├── settings.html
+│   ├── css/
+│   └── js/
+│
+├── database/
+│   └── schema.sql
+│
+└── README.md
+```
+
 ---
 
-## 🚀 Quick Start (4 Steps)
+## ⚙️ Installation & Setup
 
-### Step 1 — MySQL Setup
-   bash
-mysql -u root -p
-   
-Inside MySQL:
-   sql
-source /path/to/expense-pro/database/schema.sql;
-   
+### 1. Clone Repository
 
-### Step 2 — Configure Backend
-Edit `backend/src/main/resources/application.properties`:
-   properties
-spring.datasource.password=YOUR_MYSQL_PASSWORD
-   
+```bash
+git clone https://github.com/Ajay0206/smart-expense-tracker-v2-final.git
+```
 
-### Step 3 — Run Backend
-   bash
-cd expense-pro/backend
+### 2. Configure MySQL Database
+
+Create a database and execute the schema file:
+
+```sql
+CREATE DATABASE expense_tracker;
+```
+
+Import:
+
+```text
+database/schema.sql
+```
+
+### 3. Update Database Configuration
+
+Edit:
+
+```text
+backend/src/main/resources/application.properties
+```
+
+Update:
+
+```properties
+spring.datasource.username=root
+spring.datasource.password=your_password
+```
+
+### 4. Run Backend Application
+
+```bash
+cd backend
 mvn spring-boot:run
-   
-Wait for: `ExpensePro API started on :8080`
+```
 
-### Step 4 — Open Frontend
-   bash
-cd expense-pro/frontend
-python -m http.server 5500
-   
-Visit: **http://localhost:5500**
+### 5. Run Frontend
 
-OR use VS Code Live Server (right-click `index.html` → Open with Live Server)
+Open the frontend files using Live Server in VS Code or any local web server.
 
 ---
 
-## 🔌 REST API Reference
+## 📸 Screenshots
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/auth/register` | ❌ | Create account |
-| POST | `/api/auth/login` | ❌ | Login → returns JWT |
-| GET | `/api/expenses` | ✅ | List expenses (paginated + filterable) |
-| POST | `/api/expenses` | ✅ | Add expense |
-| PUT | `/api/expenses/{id}` | ✅ | Update expense |
-| DELETE | `/api/expenses/{id}` | ✅ | Delete expense |
-| GET | `/api/expenses/dashboard` | ✅ | Full analytics dashboard |
-| GET | `/api/expenses/categories` | ✅ | List categories |
-| PATCH | `/api/expenses/profile` | ✅ | Update profile/currency/budget |
-| GET | `/api/reports/pdf?year=&month=` | ✅ | Download PDF report |
+### Login Page
 
-### Query params for GET `/api/expenses`:
-| Param | Type | Description |
-|-------|------|-------------|
-| `page` | int | Page number (default 0) |
-| `size` | int | Page size (default 20) |
-| `categoryId` | Long | Filter by category |
-| `from` | date | Start date (YYYY-MM-DD) |
-| `to` | date | End date (YYYY-MM-DD) |
-| `q` | string | Title search |
+![Login Page](Login_page.png)
 
-### Auth header (all protected routes):
+### Dashboard
 
-Authorization: Bearer <jwt_token>
----
+![Dashboard](Dash_Board.png)
 
-## 🧪 Test the API (curl)
+### Expense Management
 
-   bash
-# Register
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"john","email":"john@test.com","password":"secret123","fullName":"John Doe"}'
+![Expenses](Expenses_page.png)
 
-# Login
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"john","password":"secret123"}'
+### Reports
 
-# Add expense (use token from login)
-curl -X POST http://localhost:8080/api/expenses \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Lunch","amount":150,"categoryId":1,"expenseDate":"2025-05-15","paymentMode":"UPI"}'
-
-# Dashboard
-curl http://localhost:8080/api/expenses/dashboard \
-  -H "Authorization: Bearer YOUR_TOKEN"
-   
+![Reports](Reports.png)
 
 ---
 
-## 🎯 Features & What They Teach
+## 🎯 Learning Outcomes
 
-| Feature | Concepts |
-|---------|---------|
-| JWT Auth | Spring Security, BCrypt, stateless auth, filter chain |
-| CRUD Expenses | REST verbs, validation, JPA transactions |
-| MySQL Schema | Normalization, foreign keys, indexes, views |
-| Dashboard Analytics | Aggregate JPQL, BigDecimal math, DTO mapping |
-| Search + Filter | Dynamic queries, pagination, Spring Data Page |
-| PDF Export | iText API, byte streams, HTTP response headers |
-| Chart.js | Line, bar, doughnut, area charts |
-| CORS Config | Cross-origin, preflight, allowed origins |
+Through this project, I gained practical experience in:
 
----
-
-## 🗄️ Database Tables
-
-| Table | Purpose |
-|-------|---------|
-| `users` | Accounts with currency + monthly limit |
-| `categories` | 12 default + custom user categories |
-| `expenses` | All transactions with date, mode, tags |
-| `budgets` | Monthly per-category budget limits |
-| `savings_goals` | Financial goals with progress tracking |
+* Full-stack web application development
+* Java Spring Boot application architecture
+* REST API development and integration
+* MySQL database design and SQL queries
+* Frontend development using HTML, CSS, and JavaScript
+* Authentication and security concepts
+* Debugging and troubleshooting application issues
+* Git and GitHub version control workflows
 
 ---
 
-## 🔒 Security Notes
+## 👨‍💻 Author
 
-- Passwords hashed with **BCrypt (cost=12)**
-- JWT tokens expire after **24 hours**
-- All routes except `/api/auth/**` require valid JWT
-- **CORS** restricted to localhost dev origins
-- SQL injection prevented via **JPA parameterised queries**
-- Input validation via **Jakarta Bean Validation** (`@NotBlank`, `@Positive`, etc.)
+**Ajay Kumar Nellore**
 
----
-
-## 💡 Interview Talking Points
-
-1. **Why JWT over sessions?** Stateless, horizontally scalable, no server-side session store needed
-2. **BCrypt cost factor 12?** Adaptive — slower means harder brute-force; cost 12 ≈ 250ms on modern hardware
-3. **Why service layer?** Separation of concerns — controllers handle HTTP, services handle business rules
-4. **Custom JPQL queries?** Avoids N+1 problems, pushes aggregation down to the database where it's faster
-5. **iText PDF?** Streaming binary response, `Content-Disposition: attachment` header triggers browser download
-6. **Page<T> return?** Spring Data pagination avoids loading entire table into memory
+* BCA Graduate
+* Aspiring Full-Stack Developer
+* Email: [nelloreajaykumar6@gmail.com](mailto:nelloreajaykumar6@gmail.com)
+* GitHub: https://github.com/Ajay0206
+* LinkedIn: https://www.linkedin.com/in/ajay-kumar-nellore-83b188247/
 
 ---
 
-*ExpensePro v2 — Built as a portfolio project demonstrating full-stack Java development.*
+## 📜 License
+
+This project is developed for educational and portfolio purposes.
