@@ -121,7 +121,13 @@ Open the frontend files using Live Server in VS Code or any local web server.
 
 ---
 ## 📸 Screenshots
+![Login Page](ScreenShots/Login_page.png)
 
+![Dashboard](ScreenShots/Dash_Board.png)
+
+![Expenses](ScreenShots/Expenses_page.png)
+
+![Reports](ScreenShots/Reports.png)
 ---
 
 ## 🎯 Learning Outcomes
