@@ -121,12 +121,16 @@ Open the frontend files using Live Server in VS Code or any local web server.
 
 ---
 ## 📸 Screenshots
+Login Page
 ![Login Page](ScreenShots/Login_page.png)
 
+Dash Board
 ![Dashboard](ScreenShots/Dash_Board.png)
 
+Expenses
 ![Expenses](ScreenShots/Expenses_page.png)
 
+Report
 ![Reports](ScreenShots/Reports.png)
 ---
 
