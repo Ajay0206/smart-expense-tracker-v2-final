@@ -1,4 +1,4 @@
-# 💰 ExpensePro v2 - Smart Expense Tracker
+Smart Expense Tracker
 
 > A Full-Stack Expense Tracking Web Application built using Java, Spring Boot, MySQL, HTML, CSS, and JavaScript to help users manage expenses, monitor spending patterns, and track financial activities efficiently.
 
@@ -6,7 +6,7 @@
 
 ## 📌 Project Overview
 
-ExpensePro v2 is a personal finance management application that enables users to record, manage, and analyze their daily expenses through an intuitive dashboard. The application demonstrates full-stack development concepts including user authentication, database management, REST APIs, frontend-backend integration, and data visualization.
+Smart Expense Tracker is a personal finance management application that enables users to record, manage, and analyze their daily expenses through an intuitive dashboard. The application demonstrates full-stack development concepts including user authentication, database management, REST APIs, frontend-backend integration, and data visualization.
 
 ---
 
